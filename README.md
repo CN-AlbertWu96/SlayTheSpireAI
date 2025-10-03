@@ -7,8 +7,8 @@ An AI-powered bot that plays Slay the Spire using OpenAI's GPT-4 or Anthropic's 
 - Python 3.8+
 - Slay the Spire with Communication Mod installed
 - API keys for either:
-  - OpenAI GPT-4 (set as `OPENAI_API_KEY` environment variable)
-  - Anthropic Claude (set as `CLAUDE_API_KEY` environment variable)
+  - OpenAI models (set as `OPENAI_API_KEY` environment variable)
+  - Anthropic models (Claude) (set as `CLAUDE_API_KEY` environment variable)
 
 ## Setup
 
@@ -23,10 +23,10 @@ pip install anthropic openai tkinter
 
 3. Set up your API keys as environment variables:
 ```bash
-# For OpenAI GPT-4
+# For OpenAI models
 export OPENAI_API_KEY='your-api-key'
 
-# For Anthropic Claude
+# For Anthropic models
 export CLAUDE_API_KEY='your-api-key'
 ```
 
@@ -78,4 +78,4 @@ Feel free to open issues or submit pull requests for improvements.
 
 ## License
 
-MIT License
+Do whatever you want
