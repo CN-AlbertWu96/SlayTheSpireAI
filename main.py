@@ -62,6 +62,9 @@ class SlayTheSpireModUI:
         master.title("Automaton")
         master.geometry("1200x800")
         master.configure(bg='#2b2b2b')
+        
+        # 设置窗口始终置顶
+        master.attributes('-topmost', True)
 
         self.messages = []
         self.last_game_state = None
