@@ -168,29 +168,37 @@ class SlayTheSpireModUI:
         
         self.start_stop_button.config(text='Stop')
         self.set_status("Generating...")
+        self.debug_print("Starting API call in background thread...")
 
         # 在新线程中执行API调用，避免阻塞GUI
         def generate_commands():
             try:
+                self.debug_print("Thread started, calling gamestate_to_output...")
                 commands = gamestate_to_output(self.last_game_state, self.print, self.debug_print, self.messages)
+                self.debug_print(f"API call completed, got {len(commands)} commands")
             except Exception as e:
                 stack_trace = traceback.format_exc()
                 self.debug_print(f"An error occurred in the gamestate_to_output func: {e}\nFull stack trace:\n{stack_trace}")
                 commands = []
 
             # 在主线程中更新UI
+            self.debug_print("Scheduling UI update on main thread...")
             self.master.after(0, lambda: self.finish_generation(commands))
 
-        threading.Thread(target=generate_commands, daemon=True).start()
+        thread = threading.Thread(target=generate_commands, daemon=True)
+        thread.start()
+        self.debug_print(f"Background thread started: {thread.name}")
 
     def finish_generation(self, commands):
         """完成生成后更新UI"""
+        self.debug_print("finish_generation called, updating UI...")
         self.start_stop_button.config(text='Start')
         self.set_status("Idle")
 
         self.last_game_state = None
         self.queued_commands = commands
         self.print("Actions:", commands)
+        self.debug_print(f"UI updated, {len(commands)} commands queued")
 
         if self.auto_do_action_var.get():
             self.do_action()
