@@ -151,7 +151,7 @@ Relics:
     is_shop = False
 
     if "next_nodes" in state["screen_state"]:
-        if len(state["choice_list"]) == 1:
+        if "choice_list" in state and len(state["choice_list"]) == 1:
             return ["choose 0"], False
         choices = {}
         i = 0
@@ -172,12 +172,12 @@ Relics:
             if state["screen_state"]["has_rested"]:
                 return ["proceed"], False
             
-        if len(state["choice_list"]) == 1:
+        if "choice_list" in state and len(state["choice_list"]) == 1:
             return ["choose 0"], False
         
         choices = []
         if state["screen_type"] == "REST":
-            for option in state["choice_list"]:
+            for option in state.get("choice_list", []):
                 choices.append(option)
         else:
             for option in state["screen_state"]["options"]:
@@ -190,7 +190,7 @@ Relics:
     elif state["screen_type"] == "HAND_SELECT":
         requires_confirm = True
         keep_messages = True
-        choices = state["choice_list"]
+        choices = state.get("choice_list", [])
         prompt = "This is a continuation of the previous event. Your choices are:\n- " + "\n- ".join([f"{i}: {choice}" for i, choice in enumerate(choices)]) + f"\n\nReflect a little bit first on the current situation and what the consequences of each choice might be. Then, make a choice by typing '{{choose}}' with the choice you want to make. For example, if you want to choose the first option, type '{{choose 0}}' as 0 is the index of that choice. The second option is index 1 and so on."
 
     elif "combat_state" in state:
@@ -198,7 +198,7 @@ Relics:
         if state["screen_type"] == "CARD_REWARD":
             requires_confirm = True
             keep_messages = True
-            choices = state["choice_list"]
+            choices = state.get("choice_list", [])
 
             prompt = "This is a continuation of the previous event. Please reflect on what you did last time that caused this choice, and what this choice does. Your choices are:\n- " + "\n- ".join([f"{i}: {choice}" for i, choice in enumerate(choices)]) + f"\n\nReflect a little bit first on the current situation and what the consequences of each choice might be. Then, make a choice by typing '{{choose}}' with the choice you want to make. For example, if you want to choose the first option, type '{{choose 0}}' as 0 is the index of that choice. The second option is index 1 and so on."
         else:
@@ -440,30 +440,32 @@ Potions:
                         debug_print("Could not find card in cardlist:", " ".join(arg.split()[2:]))
                     elif " ".join(arg.split()[2:]).lower() not in cards_in_deck:
                         debug_print("Could not find card attempted to remove in deck:", " ".join(arg.split()[2:]), "Deck:", cards_in_deck)
-                    else:
+                    elif "choice_list" in state and "purge" in state["choice_list"]:
                         commands.append(f"choose {state['choice_list'].index('purge')}")
                         commands.append(f"choose {cards_in_deck.index(' '.join(arg.split()[2:]).lower())}")
                         commands.append("confirm")
                         state['choice_list'].remove('purge')
                 else:
                     debug_print("Could not find item in shop:", arg.lower(), "Shop items:", shop_things)
-            else:
-                index = [x.lower() for x in state["choice_list"]].index(arg.lower())
-                
-                command = "choose " + str(index)
-                commands.append(command)
-                state["choice_list"].pop(index)
-                for item in state["screen_state"]["cards"] + state["screen_state"]["relics"] + state["screen_state"]["potions"]:
-                    if item["name"].lower() == arg.lower():
-                        state["gold"] -= item["price"]
-                        break
+            elif "choice_list" in state:
+                choice_list_lower = [x.lower() for x in state["choice_list"]]
+                if arg.lower() in choice_list_lower:
+                    index = choice_list_lower.index(arg.lower())
+                    
+                    command = "choose " + str(index)
+                    commands.append(command)
+                    state["choice_list"].pop(index)
+                    for item in state["screen_state"]["cards"] + state["screen_state"]["relics"] + state["screen_state"]["potions"]:
+                        if item["name"].lower() == arg.lower():
+                            state["gold"] -= item["price"]
+                            break
 
-                for item in state["screen_state"]["cards"] + state["screen_state"]["relics"] + state["screen_state"]["potions"]:
-                    if item["name"].lower() in state["choice_list"] and item["price"] > state["gold"]:
-                        state["choice_list"].remove(item["name"].lower())
+                    for item in state["screen_state"]["cards"] + state["screen_state"]["relics"] + state["screen_state"]["potions"]:
+                        if item["name"].lower() in state["choice_list"] and item["price"] > state["gold"]:
+                            state["choice_list"].remove(item["name"].lower())
 
-                if "purge" in state["choice_list"] and state["screen_state"]["purge_cost"] > state["gold"]:
-                    state["choice_list"].remove("purge")
+                    if "purge" in state["choice_list"] and state["screen_state"]["purge_cost"] > state["gold"]:
+                        state["choice_list"].remove("purge")
                     
         elif action == "potion":
             if arg.split()[0] == "use":

@@ -147,7 +147,7 @@ class SlayTheSpireModUI:
             print(command)
             sys.stdout.flush()
         else:
-            print("Performed actions")
+            self.debug_print("No more queued commands")
             if self.auto_generate_var.get():
                 self.toggle_start_stop()
             
