@@ -151,7 +151,6 @@ class SlayTheSpireModUI:
             sys.stdout.flush()
         else:
             self.debug_print("No more queued commands")
-            self.last_game_state = None  # 所有命令执行完毕后清空状态
             if self.auto_generate_var.get():
                 self.toggle_start_stop()
             
