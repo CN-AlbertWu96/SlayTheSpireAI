@@ -34,12 +34,19 @@ def get_claude_client():
     return claude_client
 
 # 腾讯云Code Plan API配置
+# 从环境变量读取API配置
+TENCENT_API_KEY = os.getenv("TENCENT_API_KEY")
+TENCENT_API_URL = os.getenv("TENCENT_API_URL", "https://api.lkeap.cloud.tencent.com/coding/v3")
+
+if not TENCENT_API_KEY:
+    raise ValueError("TENCENT_API_KEY environment variable not set. Please set it before running the bot.")
+
 openai_client = openai.Client(
-    api_key="YOUR_API_KEY_HERE",
-    base_url="https://api.lkeap.cloud.tencent.com/coding/v3"
+    api_key=TENCENT_API_KEY,
+    base_url=TENCENT_API_URL
 )
 
-model = "glm-5"
+model = os.getenv("TENCENT_MODEL", "glm-5")
 
 """
 "claude-3-5-sonnet-20240620"

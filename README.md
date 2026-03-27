@@ -23,13 +23,31 @@ conda activate slaythespire
 pip install -r requirements.txt
 ```
 
-### 3. Install Communication Mod
+### 3. Configure API Keys
+
+Create a `.env` file in the project root:
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` and add your API key:
+
+```properties
+TENCENT_API_KEY=your-api-key-here
+TENCENT_API_URL=https://api.lkeap.cloud.tencent.com/coding/v3
+TENCENT_MODEL=glm-5
+```
+
+**Important**: Never commit your `.env` file to version control!
+
+### 4. Install Communication Mod
 
 1. Subscribe to [Communication Mod on Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=2131373661)
 2. Enable the mod in-game (Mods menu)
 3. Restart the game
 
-### 4. Configure Communication Mod
+### 5. Configure Communication Mod
 
 The configuration file is located at:
 ```
@@ -44,7 +62,7 @@ runAtGameStart=true
 
 **Note**: Adjust the Python path if your Miniconda is installed in a different location.
 
-### 5. Run the Bot
+### 6. Run the Bot
 
 1. Start Slay the Spire
 2. The GUI will automatically launch when the game starts
@@ -56,12 +74,13 @@ runAtGameStart=true
 
 ### API Settings
 
-The bot is pre-configured to use Tencent Cloud GLM-5 API:
-- **API URL**: `https://api.lkeap.cloud.tencent.com/coding/v3`
-- **Model**: `glm-5`
-- **API Key**: Pre-configured in `gamestatetooutput.py`
+The bot uses environment variables for API configuration:
+- `TENCENT_API_KEY`: Your Tencent Cloud API key (required)
+- `TENCENT_API_URL`: API endpoint (default: https://api.lkeap.cloud.tencent.com/coding/v3)
+- `TENCENT_MODEL`: Model name (default: glm-5)
+- `CLAUDE_API_KEY`: Claude API key (optional, for using Claude models)
 
-To use a different model or API, edit `gamestatetooutput.py` lines 36-42.
+To use a different model, edit the `.env` file.
 
 ### Game Communication
 
@@ -84,6 +103,7 @@ Communication Mod uses stdin/stdout to communicate:
 - `main.py` - Main program and GUI
 - `gamestatetooutput.py` - Game state parsing and AI integration
 - `requirements.txt` - Python dependencies
+- `.env.example` - Environment variables template
 - `start.bat` / `start.sh` - Startup scripts (optional)
 - `test_config.py` - Communication test script
 - `data/` - Game data (cards, relics, potions, powers)
@@ -99,7 +119,7 @@ Communication Mod uses stdin/stdout to communicate:
 ### API errors
 
 1. Check network connection
-2. Verify API key in `gamestatetooutput.py`
+2. Verify API key in `.env` file
 3. Check debug output in GUI
 
 ### Communication test
@@ -110,6 +130,13 @@ python test_config.py
 ```
 
 Check the log file: `communication_test.log`
+
+## Security Notes
+
+- **Never commit `.env` file** to version control
+- Keep your API keys secure
+- Use environment variables for sensitive data
+- The `.env` file is already in `.gitignore`
 
 ## License
 
