@@ -1,6 +1,10 @@
 import sys
 import os
 
+# 加载.env文件中的环境变量
+from dotenv import load_dotenv
+load_dotenv()
+
 # 修复SSL证书环境变量问题
 if 'SSL_CERT_FILE' in os.environ and not os.path.exists(os.environ['SSL_CERT_FILE']):
     del os.environ['SSL_CERT_FILE']

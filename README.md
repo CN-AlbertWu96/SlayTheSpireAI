@@ -39,7 +39,10 @@ TENCENT_API_URL=https://api.lkeap.cloud.tencent.com/coding/v3
 TENCENT_MODEL=glm-5
 ```
 
-**Important**: Never commit your `.env` file to version control!
+**Important**:
+- Never commit your `.env` file to version control!
+- The program will automatically load environment variables from `.env` when it starts
+- Make sure `.env` is in the project root directory (same level as `main.py`)
 
 ### 4. Install Communication Mod
 
