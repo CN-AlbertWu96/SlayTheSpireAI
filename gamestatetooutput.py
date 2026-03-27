@@ -102,7 +102,8 @@ def gamestate_to_output(input_json, print, debug_print, messages=[]):
 
     potions_str = ""
     for potion in state["potions"]:
-        if potion["name"] != "Potion Slot":
+        # 支持中英文药水栏名称
+        if potion["name"] not in ["Potion Slot", "药水栏"]:
             if potion['name'].lower() not in potionlist:
                 debug_print("Unknown potion:", potion['name'])
             potions_str += f"{potion['name']}: {potionlist[potion['name'].lower()]}\n"
