@@ -36,6 +36,7 @@ def main(app):
             jsonified = json.loads(game_state.replace(",\n        ...", ""))
             if "error" not in jsonified:
                 app.last_game_state = game_state
+                app.debug_print(f"Updated last_game_state, queued_commands={len(app.queued_commands)}")
                 app.do_action()
             else:
                 app.print("game state contains error")
@@ -151,7 +152,9 @@ class SlayTheSpireModUI:
             sys.stdout.flush()
         else:
             self.debug_print("No more queued commands")
+            self.debug_print(f"auto_generate={self.auto_generate_var.get()}, is_in_combat={self.is_in_combat}")
             if self.auto_generate_var.get():
+                self.debug_print("Auto generating commands for new game state...")
                 self.toggle_start_stop()
             
             self.queued_commands = []
@@ -162,12 +165,15 @@ class SlayTheSpireModUI:
         
 
     def toggle_start_stop(self):
+        self.debug_print(f"toggle_start_stop called, last_game_state={'exists' if self.last_game_state else 'None'}")
         if self.last_game_state is None:
             self.debug_print("last game state is none")
             return
         
-        if self.start_stop_button.cget('text') == 'Stop':
-            self.debug_print("Not finished generating. Can't stop.")
+        current_button_text = self.start_stop_button.cget('text')
+        self.debug_print(f"Button state: {current_button_text}")
+        if current_button_text == 'Stop':
+            self.debug_print("Not finished generating. Can't start new generation.")
             return
         
         self.start_stop_button.config(text='Stop')
@@ -203,17 +209,17 @@ class SlayTheSpireModUI:
 
     def finish_generation(self, commands):
         """完成生成后更新UI"""
-        self.debug_print("finish_generation called, updating UI...")
+        self.debug_print(f"finish_generation called, got {len(commands)} commands")
         self.start_stop_button.config(text='Start')
         self.set_status("Idle")
 
         # 保留 last_game_state 供 do_action 使用
-        # self.last_game_state = None  # 移除这行，让 do_action 执行后再清空
         self.queued_commands = commands
         self.print("Actions:", commands)
-        self.debug_print(f"UI updated, {len(commands)} commands queued")
+        self.debug_print(f"UI updated, {len(commands)} commands queued, auto_do_action={self.auto_do_action_var.get()}")
 
         if self.auto_do_action_var.get():
+            self.debug_print("Auto executing first command...")
             self.do_action()
 
 if __name__ == "__main__":
