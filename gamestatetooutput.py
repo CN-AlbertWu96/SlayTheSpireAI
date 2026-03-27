@@ -400,7 +400,20 @@ Potions:
 
     print("Generating with prompt:\n" + prompt + "\n\n\n")
     messages.append({"role": "user", "content": prompt})
-    response = GPT(messages)
+    
+    try:
+        response = GPT(messages)
+        if not response or response.strip() == "":
+            debug_print("API returned empty response, retrying...")
+            response = GPT(messages)
+    except Exception as e:
+        debug_print(f"API call failed: {e}")
+        return [], False
+    
+    if not response or response.strip() == "":
+        debug_print("API returned empty response after retry")
+        return [], False
+    
     messages.append({"role": "assistant", "content": response})
     print("Response:\n" + response + "\n\n\n")
 

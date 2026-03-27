@@ -127,6 +127,9 @@ class SlayTheSpireModUI:
         if len(self.queued_commands) > 0:
             command = self.queued_commands.pop(0)
             if command.split()[0] == "play":
+                if self.last_game_state is None:
+                    self.debug_print("M: No game state available. Skipping action: " + command)
+                    return
                 state = json.loads(self.last_game_state.replace(",\n        ...", ""))
                 if "in_game" in state:
                     if not state["in_game"]:
@@ -148,6 +151,7 @@ class SlayTheSpireModUI:
             sys.stdout.flush()
         else:
             self.debug_print("No more queued commands")
+            self.last_game_state = None  # 所有命令执行完毕后清空状态
             if self.auto_generate_var.get():
                 self.toggle_start_stop()
             
@@ -204,7 +208,8 @@ class SlayTheSpireModUI:
         self.start_stop_button.config(text='Start')
         self.set_status("Idle")
 
-        self.last_game_state = None
+        # 保留 last_game_state 供 do_action 使用
+        # self.last_game_state = None  # 移除这行，让 do_action 执行后再清空
         self.queued_commands = commands
         self.print("Actions:", commands)
         self.debug_print(f"UI updated, {len(commands)} commands queued")
