@@ -362,7 +362,7 @@ Potions:
     elif state["screen_type"] == "GRID":
         requires_confirm = True
         keep_messages = True
-        choices = state["choice_list"]
+        choices = state.get("choice_list", [])
 
         prompt = "This is a continuation of the previous event. Your choices are:\n- " + "\n- ".join([f"{i}: {choice}" for i, choice in enumerate(choices)]) + f"\n\nReflect a little bit first on the current situation and what the consequences of each choice might be. Then, make a choice by typing '{{choose}}' with the choice you want to make. For example, if you want to choose the first option, type '{{choose 0}}' as 0 is the index of that choice. The second option is index 1 and so on."
         if state["screen_state"]["for_upgrade"]:

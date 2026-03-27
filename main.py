@@ -69,6 +69,7 @@ class SlayTheSpireModUI:
         self.messages = []
         self.last_game_state = None
         self.queued_commands = []
+        self.is_in_combat = False
 
         self.create_widgets()
 
@@ -176,12 +177,18 @@ class SlayTheSpireModUI:
                 self.debug_print("Thread started, calling gamestate_to_output...")
                 result = gamestate_to_output(self.last_game_state, self.print, self.debug_print, self.messages)
                 # 解构元组：gamestate_to_output返回(commands, is_combat)
-                commands = result[0] if isinstance(result, tuple) else result
-                self.debug_print(f"API call completed, got {len(commands)} commands")
+                if isinstance(result, tuple):
+                    commands, is_combat = result
+                else:
+                    commands = result
+                    is_combat = False
+                self.is_in_combat = is_combat
+                self.debug_print(f"API call completed, got {len(commands)} commands, is_combat={is_combat}")
             except Exception as e:
                 stack_trace = traceback.format_exc()
                 self.debug_print(f"An error occurred in the gamestate_to_output func: {e}\nFull stack trace:\n{stack_trace}")
                 commands = []
+                self.is_in_combat = False
 
             # 在主线程中更新UI
             self.debug_print("Scheduling UI update on main thread...")
