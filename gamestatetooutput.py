@@ -20,10 +20,26 @@ powerlist = {k.lower(): v for k, v in powerlist.items()}
 reliclist = {k.lower(): v for k, v in reliclist.items()}
 potionlist = {k.lower(): v for k, v in potionlist.items()}
 
-claude_client = anthropic.Client(api_key=os.getenv("CLAUDE_API_KEY"))
-openai_client = openai.Client(api_key=os.getenv("OPENAI_API_KEYt"))
+# Claude客户端（仅在需要时初始化）
+claude_client = None
 
-model = "gpt-4o"
+def get_claude_client():
+    """延迟初始化Claude客户端"""
+    global claude_client
+    if claude_client is None and os.getenv("CLAUDE_API_KEY"):
+        try:
+            claude_client = anthropic.Client(api_key=os.getenv("CLAUDE_API_KEY"))
+        except Exception as e:
+            print(f"Warning: Failed to initialize Claude client: {e}")
+    return claude_client
+
+# 腾讯云Code Plan API配置
+openai_client = openai.Client(
+    api_key="YOUR_API_KEY_HERE",
+    base_url="https://api.lkeap.cloud.tencent.com/coding/v3"
+)
+
+model = "glm-5"
 
 """
 "claude-3-5-sonnet-20240620"
@@ -31,7 +47,10 @@ model = "gpt-4o"
 
 def GPT(messages, model=model):
     if "claude" in model:
-        response = claude_client.messages.create(
+        client = get_claude_client()
+        if client is None:
+            raise ValueError("Claude API key not configured. Please set CLAUDE_API_KEY environment variable.")
+        response = client.messages.create(
             model=model,
             max_tokens=2000,
             temperature=0,

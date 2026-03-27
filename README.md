@@ -1,80 +1,115 @@
 # Slay the Spire AI
 
-An AI-powered bot that plays Slay the Spire using OpenAI's GPT-4 or Anthropic's Claude. The bot reads the game state and makes intelligent decisions about card plays, pathing, and other in-game choices.
+An AI-powered bot that plays Slay the Spire using Tencent Cloud GLM-5 model. The bot reads the game state through Communication Mod and makes intelligent decisions about card plays, pathing, and other in-game choices.
 
 ## Requirements
 
-- Python 3.8+
+- Python 3.10+
 - Slay the Spire with Communication Mod installed
-- API keys for either:
-  - OpenAI models (set as `OPENAI_API_KEY` environment variable)
-  - Anthropic models (Claude) (set as `CLAUDE_API_KEY` environment variable)
+- Miniconda or Anaconda (recommended)
 
-## Setup
+## Quick Start
 
-1. Install Python dependencies:
+### 1. Create Virtual Environment
+
 ```bash
-pip install anthropic openai tkinter
+conda create -n slaythespire python=3.10 -y
+conda activate slaythespire
 ```
 
-2. Install the Communication Mod for Slay the Spire:
-   - Subscribe to [Communication Mod on Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=2131373661)
-   - Enable the mod in-game
+### 2. Install Dependencies
 
-3. Set up your API keys as environment variables:
 ```bash
-# For OpenAI models
-export OPENAI_API_KEY='your-api-key'
-
-# For Anthropic models
-export CLAUDE_API_KEY='your-api-key'
+pip install -r requirements.txt
 ```
 
-## Usage
+### 3. Install Communication Mod
 
-1. Start Slay the Spire with Communication Mod enabled
-2. Run the bot:
-```bash
-python main.py
+1. Subscribe to [Communication Mod on Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=2131373661)
+2. Enable the mod in-game (Mods menu)
+3. Restart the game
+
+### 4. Configure Communication Mod
+
+The configuration file is located at:
 ```
-3. The UI will appear showing the game state and AI's decisions
-4. Use the controls to:
-   - Start/Stop AI decision making
-   - Toggle automatic action execution
-   - View debug information
-   - Monitor the AI's thought process
+C:\Users\Administrator\AppData\Local\ModTheSpire\CommunicationMod\config.properties
+```
+
+Set the content to:
+```properties
+command=C:/Users/Administrator/miniconda3/envs/slaythespire/python.exe C:/Users/Administrator/CodeBuddy/SlayTheSpireAI/main.py
+runAtGameStart=true
+```
+
+**Note**: Adjust the Python path if your Miniconda is installed in a different location.
+
+### 5. Run the Bot
+
+1. Start Slay the Spire
+2. The GUI will automatically launch when the game starts
+3. Begin a new game
+4. Click "Start" to generate AI decisions
+5. Enable "Auto Do Action" for automatic execution
+
+## Configuration
+
+### API Settings
+
+The bot is pre-configured to use Tencent Cloud GLM-5 API:
+- **API URL**: `https://api.lkeap.cloud.tencent.com/coding/v3`
+- **Model**: `glm-5`
+- **API Key**: Pre-configured in `gamestatetooutput.py`
+
+To use a different model or API, edit `gamestatetooutput.py` lines 36-42.
+
+### Game Communication
+
+Communication Mod uses stdin/stdout to communicate:
+1. Game sends JSON state to Python script
+2. Script calls AI API to generate decisions
+3. Script returns commands to game
+4. Game executes commands
 
 ## Features
 
-- Reads complete game state including:
-  - Cards in hand/deck/discard
-  - Enemy intents and status effects
-  - Player health, energy, and status effects
-  - Relics and potions
-- Makes intelligent decisions about:
-  - Combat strategies
-  - Path choices
-  - Card rewards
-  - Shop purchases
-  - Events and rest sites
-- Real-time UI showing game state and AI reasoning
-- Support for both GPT-4 and Claude AI models
+- Reads complete game state (cards, enemies, relics, potions)
+- Makes intelligent decisions for combat, pathing, rewards, shops
+- Real-time GUI showing game state and AI reasoning
 - Automatic action execution
 - Debug logging
 
 ## Files
 
-- `main.py` - Main program and UI
+- `main.py` - Main program and GUI
 - `gamestatetooutput.py` - Game state parsing and AI integration
-- `data/` - JSON files containing game data
-  - Card descriptions
-  - Relic effects
-  - Potion effects
-  - Power/status effect descriptions
+- `requirements.txt` - Python dependencies
+- `start.bat` / `start.sh` - Startup scripts (optional)
+- `test_config.py` - Communication test script
+- `data/` - Game data (cards, relics, potions, powers)
 
-## Contributing
+## Troubleshooting
 
-Feel free to open issues or submit pull requests for improvements.
+### GUI doesn't launch automatically
+
+1. Check the config file path is correct
+2. Verify Python path in config
+3. Check game log: `Steam\steamapps\common\SlayTheSpire\mts.log`
+
+### API errors
+
+1. Check network connection
+2. Verify API key in `gamestatetooutput.py`
+3. Check debug output in GUI
+
+### Communication test
+
+Run the test script to verify setup:
+```bash
+python test_config.py
+```
+
+Check the log file: `communication_test.log`
 
 ## License
 

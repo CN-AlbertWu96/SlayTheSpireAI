@@ -1,8 +1,16 @@
 import sys
+import os
+
+# 修复SSL证书环境变量问题
+if 'SSL_CERT_FILE' in os.environ and not os.path.exists(os.environ['SSL_CERT_FILE']):
+    del os.environ['SSL_CERT_FILE']
+if 'SSL_CERT_DIR' in os.environ and not os.path.exists(os.environ['SSL_CERT_DIR']):
+    del os.environ['SSL_CERT_DIR']
+
 print("ready") # not really
 sys.stdout.flush()
 
-import time, threading, datetime, os, json, traceback
+import time, threading, datetime, json, traceback
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(dir_path)
