@@ -174,7 +174,9 @@ class SlayTheSpireModUI:
         def generate_commands():
             try:
                 self.debug_print("Thread started, calling gamestate_to_output...")
-                commands = gamestate_to_output(self.last_game_state, self.print, self.debug_print, self.messages)
+                result = gamestate_to_output(self.last_game_state, self.print, self.debug_print, self.messages)
+                # 解构元组：gamestate_to_output返回(commands, is_combat)
+                commands = result[0] if isinstance(result, tuple) else result
                 self.debug_print(f"API call completed, got {len(commands)} commands")
             except Exception as e:
                 stack_trace = traceback.format_exc()
