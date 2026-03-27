@@ -169,13 +169,22 @@ class SlayTheSpireModUI:
         self.start_stop_button.config(text='Stop')
         self.set_status("Generating...")
 
-        try:
-            commands = gamestate_to_output(self.last_game_state, self.print, self.debug_print, self.messages)
-        except Exception as e:
-            stack_trace = traceback.format_exc()
-            self.debug_print(f"An error occurred in the gamestate_to_output func: {e}\nFull stack trace:\n{stack_trace}")
-            commands = []
+        # 在新线程中执行API调用，避免阻塞GUI
+        def generate_commands():
+            try:
+                commands = gamestate_to_output(self.last_game_state, self.print, self.debug_print, self.messages)
+            except Exception as e:
+                stack_trace = traceback.format_exc()
+                self.debug_print(f"An error occurred in the gamestate_to_output func: {e}\nFull stack trace:\n{stack_trace}")
+                commands = []
 
+            # 在主线程中更新UI
+            self.master.after(0, lambda: self.finish_generation(commands))
+
+        threading.Thread(target=generate_commands, daemon=True).start()
+
+    def finish_generation(self, commands):
+        """完成生成后更新UI"""
         self.start_stop_button.config(text='Start')
         self.set_status("Idle")
 
