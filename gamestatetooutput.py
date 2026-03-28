@@ -46,7 +46,7 @@ openai_client = openai.Client(
     base_url=TENCENT_API_URL
 )
 
-model = os.getenv("TENCENT_MODEL", "glm-5")
+model = os.getenv("TENCENT_MODEL", "hunyuan-turbos")
 
 """
 "claude-3-5-sonnet-20240620"
@@ -399,11 +399,8 @@ Cards: {cards}Relics: {relics}Potions: {potions}"""
         api_elapsed = time.time() - api_start
         debug_print(f"[PERF] API call completed in {api_elapsed:.2f}s")
         if not response or response.strip() == "":
-            debug_print("API returned empty response, retrying...")
-            api_start = time.time()
-            response = GPT(messages)
-            api_elapsed = time.time() - api_start
-            debug_print(f"[PERF] API retry completed in {api_elapsed:.2f}s")
+            debug_print("[PERF] API returned empty response, skipping retry to save time")
+            return [], False
     except Exception as e:
         api_elapsed = time.time() - api_start
         debug_print(f"[PERF] API call failed after {api_elapsed:.2f}s: {e}")
