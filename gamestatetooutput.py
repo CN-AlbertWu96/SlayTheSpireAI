@@ -407,6 +407,12 @@ Cards: {cards}Relics: {relics}Potions: {potions}"""
         arg = " ".join(match.split()[1:])
         if action == "play":
             target = ""
+            # 移除"target"关键字（如果存在）
+            arg_parts = arg.split()
+            if "target" in arg_parts:
+                arg_parts.remove("target")
+                arg = " ".join(arg_parts)
+            
             if arg.split()[-1].isdigit():
                 target = int(arg.split()[-1])
                 arg = " ".join(arg.split()[:-1])
