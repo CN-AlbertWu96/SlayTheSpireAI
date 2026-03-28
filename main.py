@@ -184,7 +184,9 @@ class SlayTheSpireModUI:
         def generate_commands():
             try:
                 self.debug_print("Thread started, calling gamestate_to_output...")
+                start_time = time.time()
                 result = gamestate_to_output(self.last_game_state, self.print, self.debug_print, self.messages)
+                elapsed_time = time.time() - start_time
                 # 解构元组：gamestate_to_output返回(commands, is_combat)
                 if isinstance(result, tuple):
                     commands, is_combat = result
@@ -192,7 +194,7 @@ class SlayTheSpireModUI:
                     commands = result
                     is_combat = False
                 self.is_in_combat = is_combat
-                self.debug_print(f"API call completed, got {len(commands)} commands, is_combat={is_combat}")
+                self.debug_print(f"API call completed in {elapsed_time:.2f}s, got {len(commands)} commands, is_combat={is_combat}")
             except Exception as e:
                 stack_trace = traceback.format_exc()
                 self.debug_print(f"An error occurred in the gamestate_to_output func: {e}\nFull stack trace:\n{stack_trace}")
