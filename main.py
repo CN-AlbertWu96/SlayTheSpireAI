@@ -112,8 +112,8 @@ class SlayTheSpireModUI:
         self.start_stop_button = tk.Button(control_frame, text="Start", command=self.toggle_start_stop)
         self.start_stop_button.pack(side=tk.LEFT, padx=(0, 10))
 
-        # Auto Generate Checkbox
-        self.auto_generate_var = tk.BooleanVar()
+        # Auto Generate Checkbox (默认开启)
+        self.auto_generate_var = tk.BooleanVar(value=True)
         self.auto_generate_check = tk.Checkbutton(control_frame, text="Auto Generate", variable=self.auto_generate_var, bg='#2b2b2b', fg='white', selectcolor='#1e1e1e')
         self.auto_generate_check.pack(side=tk.LEFT)
 

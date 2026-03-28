@@ -46,7 +46,7 @@ openai_client = openai.Client(
     base_url=TENCENT_API_URL
 )
 
-model = os.getenv("TENCENT_MODEL", "hunyuan-turbos")
+model = os.getenv("TENCENT_MODEL", "tc-code-latest")
 
 """
 "claude-3-5-sonnet-20240620"
@@ -70,7 +70,8 @@ def GPT(messages, model=model):
             model=model,
             max_tokens=2000,
             temperature=0,
-            messages=messages
+            messages=messages,
+            timeout=30.0  # 30秒超时
         )
 
         return response.choices[0].message.content
