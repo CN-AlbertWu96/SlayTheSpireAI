@@ -164,8 +164,7 @@ Relics:
         if len(choices) == 1:
             return ["choose 0"], False
         
-        prompt += "You are currently at the map screen and you need to choose where to go next. Your choices are: \n- " + "\n- ".join(choices.keys())
-        prompt += f"\n\nReflect a little bit first on the current situation and what the consequences of each choice might be. Then, make a choice by typing '{{choose}}' with the choice you want to make. For example, if you want to go to the '{list(choices.keys())[0]}', type '{{choose 0}}' as 0 is the index of that choice. The second option is index 1 and so on."""
+        prompt += f"Map: Choose next location.\nOptions: {', '.join([f'{i}: {k}' for i, k in enumerate(choices.keys())])}\nAction: {{choose index}}"""
     
     elif state["screen_type"] == "EVENT" or state["screen_type"] == "REST":
         if state["screen_type"] == "REST":
@@ -183,15 +182,14 @@ Relics:
             for option in state["screen_state"]["options"]:
                 choices.append(option["text"])
         
-        event_text = f" The event text is: '{state['screen_state']['body_text']}'." if 'body_text' in state['screen_state'] and state['screen_state']['body_text'] != "" else ""
-        prompt += f"""You are currently in an event called '{state["screen_state"]["event_name"] if state["screen_type"] == "EVENT" else "Rest"}'.{event_text} Your choices are:
-- """ + "\n- ".join(choices) + f"\n\nReflect a little bit first on the current situation and what the consequences of each choice might be. Then, make a choice by typing '{{choose}}' with the choice you want to make. For example, if you want to choose the first option, type '{{choose 0}}' as 0 is the index of that choice. The second option is index 1 and so on."""
+        event_text = f" {state['screen_state']['body_text']}" if 'body_text' in state['screen_state'] and state['screen_state']['body_text'] else ""
+        prompt += f"Event: {state['screen_state']['event_name'] if state['screen_type'] == 'EVENT' else 'Rest'}\nText: {event_text}\nOptions: {', '.join([f'{i}: {c}' for i, c in enumerate(choices)])}\nAction: {{choose index}}"
 
     elif state["screen_type"] == "HAND_SELECT":
         requires_confirm = True
         keep_messages = True
         choices = state.get("choice_list", [])
-        prompt = "This is a continuation of the previous event. Your choices are:\n- " + "\n- ".join([f"{i}: {choice}" for i, choice in enumerate(choices)]) + f"\n\nReflect a little bit first on the current situation and what the consequences of each choice might be. Then, make a choice by typing '{{choose}}' with the choice you want to make. For example, if you want to choose the first option, type '{{choose 0}}' as 0 is the index of that choice. The second option is index 1 and so on."
+        prompt = f"Select cards.\nOptions: {', '.join([f'{i}: {c}' for i, c in enumerate(choices)])}\nAction: {{choose index}}"
 
     elif "combat_state" in state:
         is_combat = True
@@ -199,54 +197,54 @@ Relics:
             requires_confirm = True
             keep_messages = True
             choices = state.get("choice_list", [])
-
-            prompt = "This is a continuation of the previous event. Please reflect on what you did last time that caused this choice, and what this choice does. Your choices are:\n- " + "\n- ".join([f"{i}: {choice}" for i, choice in enumerate(choices)]) + f"\n\nReflect a little bit first on the current situation and what the consequences of each choice might be. Then, make a choice by typing '{{choose}}' with the choice you want to make. For example, if you want to choose the first option, type '{{choose 0}}' as 0 is the index of that choice. The second option is index 1 and so on."
+            prompt = f"Card Reward (choose one):\n{', '.join([f'{i}: {c}' for i, c in enumerate(choices)])}\nAction: {{choose index}} or {{skip}}"
         else:
             unique_cards = set()
 
             def pile_to_str(pile, fill_combat_hand=False):
                 pile_str = ""
                 for card in pile:
-                    unique_cards.add(card["name"].lower())
                     if fill_combat_hand:
                         combat_hand.append(card["name"])
-                    pile_str += f"{card['name']} ({'X' if card['cost'] == -1 else (card['cost'] if card['cost'] != -2 else 'Unplayable')} Energy)\n"
+                        unique_cards.add(card["name"].lower())
+                    pile_str += f"{card['name']} ({'X' if card['cost'] == -1 else (card['cost'] if card['cost'] != -2 else 'Unplayable')}) "
                 if pile_str == "":
-                    pile_str = "Empty\n"
-                return pile_str
+                    pile_str = "Empty"
+                return pile_str.strip()
             
             draw_pile = pile_to_str(state["combat_state"]["draw_pile"])
             discard_pile = pile_to_str(state["combat_state"]["discard_pile"])
             hand = pile_to_str(state["combat_state"]["hand"], fill_combat_hand=True)
 
+            # 只发送手牌中的卡牌描述
             card_descriptions = ""
-            for card in unique_cards:
-                if card not in cardlist:
-                    debug_print("Unknown card:", card)
-                    continue
-                card_descriptions += f"{card}: {cardlist[card]}\n"
+            for card in combat_hand:
+                card_lower = card.lower()
+                if card_lower in cardlist:
+                    card_descriptions += f"{card}: {cardlist[card_lower]}\n"
 
             monsters = ""
             i = 0
             for monster in state["combat_state"]["monsters"]:
                 if not monster["is_gone"]:
                     if monster["intent"] == "ATTACK" or monster["move_base_damage"] > 0:
-                        intent = f"""Attack for {monster['move_adjusted_damage']}{f'x{monster["move_hits"]}' if monster['move_hits'] > 1 else ''} damage"""
+                        hits_str = f"x{monster['move_hits']}" if monster['move_hits'] > 1 else ''
+                        intent = f"Attack {monster['move_adjusted_damage']}{hits_str}"
                     elif monster["intent"] == "DEBUG":
-                        intent = "BUFF"
+                        intent = "Buff"
                         debug_print("DEBUG INTENT", i)
                     elif monster["intent"] == "UNKNOWN":
-                        intent = "UNKNOWN (not attacking)"
+                        intent = "Unknown"
                     else:
-                        intent = monster["intent"]
-                    intent = intent.lower().capitalize()
+                        intent = monster["intent"].lower().capitalize()
 
                     for power in monster['powers']:
                         if power['name'].lower() not in powerlist:
                             debug_print("Unknown power:", power['name'])
                             monster['powers'].remove(power)
 
-                    monsters += f"""{monster['name']}:\n- Index: {i}\n- {monster['current_hp']}/{monster['max_hp']}HP\n- {monster['block']} block\n- Intent: {intent}\n- Powers: {', '.join([f"{power['amount']} {power['name']} ({powerlist[power['name'].lower()].replace('X', str(power['amount']))})" for power in monster['powers']])}\n\n"""
+                    powers_str = ", ".join([f"{power['amount']} {power['name']}" for power in monster['powers']]) if monster['powers'] else "None"
+                    monsters += f"[{i}] {monster['name']}: {monster['current_hp']}/{monster['max_hp']}HP, {monster['block']} block, Intent: {intent}, Powers: {powers_str}\n"
 
                 i += 1
 
@@ -255,26 +253,22 @@ Relics:
                 if power['name'].lower() not in powerlist:
                     debug_print("Unknown power:", power['name'])
                 else:
-                    player_powers += f"- {power['amount']} {power['name']} ({powerlist[power['name'].lower()].replace('X', str(power['amount']))})\n"
-            if player_powers != "":
-                player_powers = "\nYour Powers/Effects:\n" + player_powers
+                    player_powers += f"{power['amount']} {power['name']}, "
+            if player_powers:
+                player_powers = f"\nYour Powers: {player_powers.strip(', ')}"
 
-            prompt += f"""You are currently in combat.
-
-Card descriptions:
-{card_descriptions}
-Draw pile:
-{draw_pile}
-Discard pile:
-{discard_pile}
-Your hand:
-{hand}
+            prompt += f"""Combat State:
 Energy: {state["combat_state"]["player"]["energy"]}
-{player_powers}
+Hand: {hand}
+Draw Pile: {draw_pile}
+Discard Pile: {discard_pile}{player_powers}
+
 Enemies:
 {monsters}
-
-Reflect first on the current and what you should do. The energy cost of each card is next to the name of the card inside parenthesis. It is very important that you look at how much energy you have and if you have enough energy to play the cards you want to play. Please ensure you have enough energy for the cards you want to play. You can ONLY play cards that are currently in your hand. To play a card from your hand, type '{{play}}' with the name of the card and the target index if the card requires a target. For example, if you want to play a 'Strike', type '{{play Strike 0}}'. This will play the strike card against the enemy with index 0. If you want to play a card which does not have a target, like a defend, you don't need to include the target index. To end your turn, type '{{end}}'. To use a potion use the {{potion}} action. For example, if you want to use your first potion, type {{potion use 0}}. 0 is the index of the potion slot with the potion you want to play, so the second potion slot is index 1 and so on. If the potion requires a target enemy, add the index of that enemy after the potion slot index. Write a list of these actions in the order you want to perform them in. If you are playing a special card that requires you to make another choice after playing it, like if you draw a new card and you want to see that card before doing anything else, simply don't do any other actions after that and you will be prompted with the new game state. Ending your turn will end your turn, so you should only do that when you are sure you don't want to do anything else. After thinking through what cards you want to play, double check if you have enough energy to play all those cards by adding together all their energy costs in a math equation. VERY IMPORTANT!!! Do NOT use curly brackets anywhere else except when you are performing an action. If you use curly brackets anywhere else, the action inside the curly brackets will be executed no matter what, so be careful to not use curly brackets when planning your actions."""
+Card Effects:
+{card_descriptions}
+Actions: {{play CardName target}} {{end}} {{potion use/discard slot target}}
+Rules: Only play cards in hand. Check energy. Use {{}} only for actions."""
 
     elif state["screen_type"] == "SHOP_SCREEN":
         is_shop = True
@@ -296,18 +290,11 @@ Reflect first on the current and what you should do. The energy cost of each car
                 debug_print("Unknown potion:", potion["name"])
             potions += f"""{potion["name"]} ({potion["price"]} gold) (costs {card["cost"]} energy in combat): {potionlist[potion["name"].lower()]}\n"""
             shop_things.append(potion["name"].lower())
-        prompt += f"""You are currently in a shop. Reflect on what you need and what you can afford. To buy an item, type '{{buy}}' with the name of the item. For example, if you want to buy a 'card removal', type '{{buy card removal cardname}}'. If you choose to buy a card removal, include the name of the card you want to remove. To buy a regular card, relic, or potion, it is simply '{{buy name}}'. Write a list of these actions to buy multiple things. If you want to buy a potion, ensure you have an empty potion slot first so you have room to pick it up. If you need room and want to discard a potion, use the action {{potion discard}} followed by the index of the potion slot of the potion you want to discard. For example, to remove ur first potion, type {{potion discard 0}}. After choosing what items you want to buy, check if you have enough gold by adding together their costs in a math equation before making your final decision. VERY IMPORTANT!!! Remember, every time you write an action inside curly brackets it will be executed no matter what, so be careful to not use curly brackets when planning ur actions.
-
-Shop items:
-Cards:
-{cards}
-Relics:
-{relics}
-Potions:
-{potions}
-"""
+        prompt += f"""Shop (Gold: {state['gold']})
+Cards: {cards}Relics: {relics}Potions: {potions}"""
         if state["screen_state"]["purge_available"]:
-            prompt += f'Card removal: Choose a card to remove from your deck. Costs {state["screen_state"]["purge_cost"]} gold. Can only be purchased once per shop.'
+            prompt += f"Card Removal: {state['screen_state']['purge_cost']} gold\n"
+        prompt += "Actions: {{buy itemname}} {{potion discard slot}}. Check gold before buying."
     
     elif state["screen_type"] == "REST_SITE":
         choices = {}
@@ -317,8 +304,7 @@ Potions:
         if len(choices) == 1:
             return ["choose 0"], False
 
-        prompt += f"""You are currently at a rest site. Reflect on your current health and what you should do. Your choices are:
-- """ + "\n- ".join(choices.keys()) + f"\n\nReflect a little bit first on the current situation and what the consequences of each choice might be. Then, make a choice by typing '{{choose}}' with the choice you want to make. For example, if you want to choose the first option, type '{{choose 0}}' as 0 is the index of that choice. The second option is index 1 and so on."""
+        prompt += f"Rest Site. HP: {state['current_hp']}/{state['max_hp']}\nOptions: {', '.join([f'{i}: {k}' for i, k in enumerate(choices.keys())])}\nAction: {{choose index}}"
             
     elif state["screen_type"] == "CARD_REWARD":
         cards = ""
@@ -326,8 +312,7 @@ Potions:
             if card["name"].lower() not in cardlist:
                 debug_print("Unknown card:", card["name"])
             cards += f"{card['name']} ({'X' if card['cost'] == -1 else (card['cost'] if card['cost'] != -2 else 'Unplayable')} Energy): {cardlist[card['name'].lower()]}\n"
-        prompt += f"""You are currently being offered a choice of cards. Reflect on what you need and what would be most beneficial. The energy cost of each card is written in parenthesis next to it. Your choices are:
-""" + cards + f"\nReflect a little bit first on the current situation and what the consequences of each choice might be. Then, make a choice by typing '{{choose}}' with the choice you want to make. For example, if you want to choose the first card, type '{{choose 0}}' as 0 is the index of that choice. The second option is index 1 and so on. If you don't think any of the cards are beneficial to your deck, you can choose to skip this reward by typing {{skip}}"""
+        prompt += f"Card Reward:\n{cards}Action: {{choose index}} or {{skip}}"
     
     elif state["screen_type"] == "COMBAT_REWARD":
         is_combat_reward = True
@@ -356,17 +341,16 @@ Potions:
                 reward_list.append(reward["reward_type"])
 
         rewards = "- " + "\n- ".join(reward_list)
-        prompt += f"""You have defeated the enemies and are now being offered rewards. Reflect on what you need and if you need it. ALL the choices are FREE and you can choose as many as you want. This means that you should only not choose something when it may be harmful to the future of your run. Make a choice by typing '{{choose}}' with the choice you want to make. For example, if you want to choose the first reward, type '{{choose 0}}' as 0 is the index of that reward. The second option is index 1 and so on. If you want to pick up a potion, ensure you have an empty potion slot first so you have room to pick it up. If you need room and want to discard a potion, use the action {{potion discard}} followed by the index of the potion slot of the potion you want to discard. For example, to remove ur first potion, type {{potion discard 0}}. When you choose the card reward by using an action, you will be prompted with the choice to add one of three cards to your deck, or skip it entirely to add no cards. There is no harm in looking. Write a list of all the actions you want to take, if you omit any reward from the action list, it will not be claimed or checked. Your rewards are:
-{rewards}"""
+        prompt += f"Combat Rewards (all free, choose multiple):\n{rewards}\nAction: {{choose index}} {{potion discard slot}}"
         
     elif state["screen_type"] == "GRID":
         requires_confirm = True
         keep_messages = True
         choices = state.get("choice_list", [])
-
-        prompt = "This is a continuation of the previous event. Your choices are:\n- " + "\n- ".join([f"{i}: {choice}" for i, choice in enumerate(choices)]) + f"\n\nReflect a little bit first on the current situation and what the consequences of each choice might be. Then, make a choice by typing '{{choose}}' with the choice you want to make. For example, if you want to choose the first option, type '{{choose 0}}' as 0 is the index of that choice. The second option is index 1 and so on."
+        
+        prompt = f"Grid selection:\n{', '.join([f'{i}: {c}' for i, c in enumerate(choices)])}\nAction: {{choose index}}"
         if state["screen_state"]["for_upgrade"]:
-            prompt += "Since this is a choice for an upgrade, this is how all your cards look like upgraded:\n"
+            prompt += "\nUpgraded versions:\n"
             for card in state["deck"]:
                 name = card['name']
                 if not name.endswith("+"):
@@ -374,7 +358,7 @@ Potions:
                 if card["name"].lower() not in cardlist:
                     debug_print("Unknown card:", card["name"])
                 else:
-                    prompt += f"{name} ({'X' if card['cost'] == -1 else (card['cost'] if card['cost'] != -2 else 'Unplayable')} Energy): {cardlist[name.lower()]}\n"
+                    prompt += f"{name} ({card['cost']}): {cardlist[name.lower()]}\n"
     
     elif state["screen_type"] == "CHEST":
         if not state["screen_state"]["chest_open"]:
@@ -387,9 +371,7 @@ Potions:
                 debug_print("Unknown relic:", relic["name"])
             else:
                 relics += f"{relic['name']}: {reliclist[relic['name'].lower()]}\n"
-        prompt += f"""You have defeated the boss and are now being offered a boss relic. Reflect on what you need and if you need it. Your choices are:
-{relics}
-\n\nReflect a little bit first on the current situation and what the consequences of each choice might be. Then, make a choice by typing '{{choose}}' with the choice you want to make. For example, if you want to choose the first relic, type '{{choose 0}}' as 0 is the index of that choice. The second option is index 1 and so on. You can only choose one of these boss relics, so choose wisely. If you don't want any of the relics, you can choose to skip this reward by typing {{skip}}"""
+        prompt += f"Boss Relic (choose one):\n{relics}Action: {{choose index}} or {{skip}}"
     else:
         debug_print("Unknown screen type:", state["screen_type"])
         return [], False
