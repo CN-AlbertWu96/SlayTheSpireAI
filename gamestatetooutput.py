@@ -1,4 +1,4 @@
-import json, anthropic, re, os, sys, openai
+import json, anthropic, re, os, sys, openai, time
 
 dir_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
 
@@ -46,7 +46,7 @@ openai_client = openai.Client(
     base_url=TENCENT_API_URL
 )
 
-model = os.getenv("TENCENT_MODEL", "tc-code-latest")
+model = os.getenv("TENCENT_MODEL", "glm-5")
 
 """
 "claude-3-5-sonnet-20240620"
@@ -66,18 +66,25 @@ def GPT(messages, model=model):
         
         return response.content[0].text
     else:
-        response = openai_client.chat.completions.create(
-            model=model,
-            max_tokens=2000,
-            temperature=0,
-            messages=messages,
-            timeout=30.0  # 30秒超时
-        )
-
-        return response.choices[0].message.content
+        try:
+            response = openai_client.chat.completions.create(
+                model=model,
+                max_tokens=2000,
+                temperature=0,
+                messages=messages,
+                timeout=60.0  # 60秒超时
+            )
+            return response.choices[0].message.content
+        except Exception as e:
+            # 记录超时或其他错误
+            raise e
 
 def gamestate_to_output(input_json, print, debug_print, messages=[]):
+    start_time = time.time()
+    debug_print(f"[PERF] Starting gamestate_to_output")
+
     state = json.loads(input_json.replace(",\n        ...", ""))
+    debug_print(f"[PERF] JSON parsed in {time.time() - start_time:.2f}s")
 
     if "in_game" in state:
         if not state["in_game"]:
@@ -381,16 +388,25 @@ Cards: {cards}Relics: {relics}Potions: {potions}"""
         while len(messages) > 0:
             messages.pop()
 
+    debug_print(f"[PERF] Prompt generated in {time.time() - start_time:.2f}s, length={len(prompt)} chars")
     print("Generating with prompt:\n" + prompt + "\n\n\n")
     messages.append({"role": "user", "content": prompt})
-    
+
+    api_start = time.time()
+    debug_print(f"[PERF] Starting API call with model: {model}")
     try:
         response = GPT(messages)
+        api_elapsed = time.time() - api_start
+        debug_print(f"[PERF] API call completed in {api_elapsed:.2f}s")
         if not response or response.strip() == "":
             debug_print("API returned empty response, retrying...")
+            api_start = time.time()
             response = GPT(messages)
+            api_elapsed = time.time() - api_start
+            debug_print(f"[PERF] API retry completed in {api_elapsed:.2f}s")
     except Exception as e:
-        debug_print(f"API call failed: {e}")
+        api_elapsed = time.time() - api_start
+        debug_print(f"[PERF] API call failed after {api_elapsed:.2f}s: {e}")
         return [], False
     
     if not response or response.strip() == "":
