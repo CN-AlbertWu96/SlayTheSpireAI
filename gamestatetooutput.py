@@ -46,7 +46,7 @@ openai_client = openai.Client(
     base_url=TENCENT_API_URL
 )
 
-model = os.getenv("TENCENT_MODEL", "glm-5")
+model = os.getenv("TENCENT_MODEL", "hunyuan-turbos")
 
 """
 "claude-3-5-sonnet-20240620"
