@@ -14,7 +14,7 @@ if 'SSL_CERT_DIR' in os.environ and not os.path.exists(os.environ['SSL_CERT_DIR'
 print("ready") # not really
 sys.stdout.flush()
 
-import time, threading, datetime, json, traceback
+import time, threading, datetime, json, traceback, logging
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(dir_path)
@@ -24,6 +24,10 @@ from gamestatetooutput import gamestate_to_output
 logs_path = os.path.join(dir_path, "logs")
 if not os.path.exists(logs_path):
     os.makedirs(logs_path)
+
+# 配置日志格式
+def get_timestamp():
+    return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
 
 def main(app):
     app.print("Automaton started")
@@ -50,7 +54,7 @@ def main(app):
             filename = datetime.datetime.now().strftime("%m-%d_%H-%M-%S") + "-ERROR.json"
             with open(os.path.join(logs_path, filename), "w") as f:
                 json.dump(json.loads(game_state), f, indent=4)
-            app.debug_print(s)
+            app.error_print(f"An error occurred: {e}")
             break
 
 
@@ -114,11 +118,27 @@ class SlayTheSpireModUI:
         self.auto_generate_check.pack(side=tk.LEFT)
 
     def print(self, *text):
-        self.main_text.insert(tk.END, " ".join([str(x) for x in text]) + '\n')
+        """INFO级别日志 - 输出到主文本框"""
+        timestamp = get_timestamp()
+        message = " ".join([str(x) for x in text])
+        formatted = f"[{timestamp}] [INFO] {message}"
+        self.main_text.insert(tk.END, formatted + '\n')
         self.main_text.see(tk.END)
 
     def debug_print(self, *text):
-        self.debug_text.insert(tk.END, " ".join([str(x) for x in text]) + '\n')
+        """DEBUG级别日志 - 输出到调试文本框"""
+        timestamp = get_timestamp()
+        message = " ".join([str(x) for x in text])
+        formatted = f"[{timestamp}] [DEBUG] {message}"
+        self.debug_text.insert(tk.END, formatted + '\n')
+        self.debug_text.see(tk.END)
+
+    def error_print(self, *text):
+        """ERROR级别日志 - 输出到调试文本框"""
+        timestamp = get_timestamp()
+        message = " ".join([str(x) for x in text])
+        formatted = f"[{timestamp}] [ERROR] {message}"
+        self.debug_text.insert(tk.END, formatted + '\n')
         self.debug_text.see(tk.END)
 
     def set_status(self, status):
@@ -197,7 +217,8 @@ class SlayTheSpireModUI:
                 self.debug_print(f"API call completed in {elapsed_time:.2f}s, got {len(commands)} commands, is_combat={is_combat}")
             except Exception as e:
                 stack_trace = traceback.format_exc()
-                self.debug_print(f"An error occurred in the gamestate_to_output func: {e}\nFull stack trace:\n{stack_trace}")
+                self.error_print(f"An error occurred in the gamestate_to_output func: {e}")
+                self.debug_print(f"Full stack trace:\n{stack_trace}")
                 commands = []
                 self.is_in_combat = False
 
