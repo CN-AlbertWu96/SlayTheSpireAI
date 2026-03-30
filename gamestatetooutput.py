@@ -67,6 +67,7 @@ def GPT(messages, model=model):
         return response.content[0].text
     else:
         try:
+            print(f"[API] Calling OpenAI-compatible API with model: {model}")
             response = openai_client.chat.completions.create(
                 model=model,
                 max_tokens=2000,
@@ -74,9 +75,19 @@ def GPT(messages, model=model):
                 messages=messages,
                 timeout=60.0  # 60秒超时
             )
-            return response.choices[0].message.content
+            
+            # 检查响应结构
+            if not response.choices or len(response.choices) == 0:
+                print(f"[API] No choices in response: {response}")
+                return ""
+            
+            content = response.choices[0].message.content
+            print(f"[API] Response content length: {len(content) if content else 0}")
+            
+            return content
         except Exception as e:
-            # 记录超时或其他错误
+            # 记录详细错误信息
+            print(f"[API] Exception in GPT call: {type(e).__name__}: {e}")
             raise e
 
 def gamestate_to_output(input_json, print, debug_print, messages=[]):
@@ -404,12 +415,29 @@ Cards: {cards}Relics: {relics}Potions: {potions}"""
         response = GPT(messages)
         api_elapsed = time.time() - api_start
         debug_print(f"[PERF] API call completed in {api_elapsed:.2f}s")
+        
+        # 检查响应是否为空
         if not response or response.strip() == "":
-            debug_print("[PERF] API returned empty response, skipping retry to save time")
-            return [], False
+            debug_print("[PERF] API returned empty response")
+            debug_print(f"[PERF] Response type: {type(response)}, value: '{response}'")
+            
+            # 尝试重试一次
+            debug_print("[PERF] Retrying API call...")
+            try:
+                response = GPT(messages)
+                api_elapsed = time.time() - api_start
+                debug_print(f"[PERF] Retry API call completed in {api_elapsed:.2f}s")
+                
+                if not response or response.strip() == "":
+                    debug_print("[PERF] Retry also returned empty response, giving up")
+                    return [], False
+            except Exception as retry_e:
+                debug_print(f"[PERF] Retry failed: {retry_e}")
+                return [], False
     except Exception as e:
         api_elapsed = time.time() - api_start
         debug_print(f"[PERF] API call failed after {api_elapsed:.2f}s: {e}")
+        debug_print(f"[PERF] Exception type: {type(e).__name__}")
         return [], False
     
     if not response or response.strip() == "":
