@@ -262,8 +262,7 @@ Relics:
                     card_descriptions += f"{card}: {cardlist[card_lower]}\n"
 
             monsters = ""
-            i = 0
-            for monster in state["combat_state"]["monsters"]:
+            for i, monster in enumerate(state["combat_state"]["monsters"]):
                 if not monster["is_gone"]:
                     if monster["intent"] == "ATTACK" or monster["move_base_damage"] > 0:
                         hits_str = f"x{monster['move_hits']}" if monster['move_hits'] > 1 else ''
@@ -283,8 +282,6 @@ Relics:
 
                     powers_str = ", ".join([f"{power['amount']} {power['name']}" for power in monster['powers']]) if monster['powers'] else "None"
                     monsters += f"[{i}] {monster['name']}: {monster['current_hp']}/{monster['max_hp']}HP, {monster['block']} block, Intent: {intent}, Powers: {powers_str}\n"
-
-                i += 1
 
             player_powers = ""
             for power in state["combat_state"]["player"]["powers"]:
