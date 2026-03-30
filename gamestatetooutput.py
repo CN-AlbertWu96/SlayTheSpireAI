@@ -437,7 +437,14 @@ Cards: {cards}Relics: {relics}Potions: {potions}"""
                         target = i
                         break
                     i += 1
-            if arg not in combat_hand:
+            
+            # 清理卡牌名称：移除括号部分（如 "Defend (1)" -> "Defend"）
+            # AI 可能看到 "Defend (1)" 格式，但 combat_hand 只有 "Defend"
+            arg_cleaned = re.sub(r'\s*\([^)]*\)', '', arg).strip()
+            
+            if arg_cleaned in combat_hand:
+                arg = arg_cleaned
+            elif arg not in combat_hand:
                 debug_print("Could not find card in hand:", arg, "Hand:", combat_hand)
 
             command = f"play {arg} {target}"
