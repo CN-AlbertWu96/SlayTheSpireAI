@@ -292,6 +292,10 @@ Relics:
             if player_powers:
                 player_powers = f"\nYour Powers: {player_powers.strip(', ')}"
 
+            # 计算可用的目标索引
+            available_targets = [i for i, m in enumerate(state["combat_state"]["monsters"]) if not m["is_gone"]]
+            targets_str = ", ".join(map(str, available_targets))
+            
             prompt += f"""Combat State:
 Energy: {state["combat_state"]["player"]["energy"]} (IMPORTANT: Total cost of cards played cannot exceed this!)
 Hand: {hand}
@@ -302,15 +306,16 @@ Enemies:
 {monsters}
 Card Effects:
 {card_descriptions}
+Available Targets: {targets_str} (CRITICAL: Only use these indices!)
+
 Actions:
 - {{play CardName}} for block/defense cards (no target needed)
-- {{play CardName target_number}} for attack cards (target: 0 or 1 for enemy index)
+- {{play CardName target_number}} for attack cards (use Available Targets above)
 - {{end}} to end your turn
 
 Examples:
 {{play Defend}} - correct
-{{play Strike 0}} - correct (Strike targets enemy 0)
-{{play Headbutt 1}} - correct (Headbutt targets enemy 1)
+{{play Strike {available_targets[0]}}} - correct (Strike targets enemy {available_targets[0]})
 
 Rules: 
 1. Only play cards in hand
@@ -319,7 +324,8 @@ Rules:
 4. If you have multiple cards with the same name, count them in your Hand list above
 5. Prioritize 0-cost cards when possible
 6. ALWAYS end your turn with {{end}} command after playing all desired cards
-7. Use {{}} only for actions"""
+7. Use {{}} only for actions
+8. ONLY use target numbers from Available Targets list"""
 
     elif state["screen_type"] == "SHOP_SCREEN":
         is_shop = True
