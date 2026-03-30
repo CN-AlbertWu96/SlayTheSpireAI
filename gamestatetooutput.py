@@ -281,7 +281,8 @@ Rules:
 2. TOTAL ENERGY COST must not exceed {state["combat_state"]["player"]["energy"]}
 3. Each card can only be played ONCE per turn
 4. Prioritize 0-cost cards when possible
-5. Use {{}} only for actions"""
+5. ALWAYS end your turn with {{end}} command after playing all desired cards
+6. Use {{}} only for actions"""
 
     elif state["screen_type"] == "SHOP_SCREEN":
         is_shop = True
@@ -540,5 +541,10 @@ Cards: {cards}Relics: {relics}Potions: {potions}"""
         commands.append("proceed")
     if state["screen_type"] == "BOSS_REWARD":
         commands.append("proceed")
+    
+    # 双重保险：如果 AI 忘记在战斗回合结束时添加 {end}，自动补上
+    if is_combat and commands and commands[-1] != "end":
+        debug_print("Auto-adding 'end' command to finish combat turn")
+        commands.append("end")
 
     return commands, is_combat
