@@ -52,7 +52,25 @@ model = os.getenv("TENCENT_MODEL")
 "claude-3-5-sonnet-20240620"
 """
 
-def GPT(messages, model=model):
+def GPT(messages, model=model, debug_print=None):
+    """
+    调用大模型API
+    
+    Args:
+        messages: 对话历史
+        model: 模型名称
+        debug_print: 调试日志函数（可选）
+    
+    Returns:
+        str: 模型生成的文本
+    """
+    def log(msg):
+        """统一日志输出"""
+        if debug_print:
+            debug_print(msg)
+        else:
+            print(msg)
+    
     if "claude" in model:
         client = get_claude_client()
         if client is None:
@@ -67,7 +85,7 @@ def GPT(messages, model=model):
         return response.content[0].text
     else:
         try:
-            print(f"[API] Calling OpenAI-compatible API with model: {model}")
+            log(f"[API] Calling OpenAI-compatible API with model: {model}")
             response = openai_client.chat.completions.create(
                 model=model,
                 max_tokens=2000,
@@ -78,16 +96,16 @@ def GPT(messages, model=model):
             
             # 检查响应结构
             if not response.choices or len(response.choices) == 0:
-                print(f"[API] No choices in response: {response}")
+                log(f"[API] No choices in response: {response}")
                 return ""
             
             content = response.choices[0].message.content
-            print(f"[API] Response content length: {len(content) if content else 0}")
+            log(f"[API] Response content length: {len(content) if content else 0}")
             
             return content
         except Exception as e:
             # 记录详细错误信息
-            print(f"[API] Exception in GPT call: {type(e).__name__}: {e}")
+            log(f"[API] Exception in GPT call: {type(e).__name__}: {e}")
             raise e
 
 def gamestate_to_output(input_json, print, debug_print, messages=[]):
@@ -412,7 +430,7 @@ Cards: {cards}Relics: {relics}Potions: {potions}"""
     api_start = time.time()
     debug_print(f"[PERF] Starting API call with model: {model}")
     try:
-        response = GPT(messages)
+        response = GPT(messages, debug_print=debug_print)
         api_elapsed = time.time() - api_start
         debug_print(f"[PERF] API call completed in {api_elapsed:.2f}s")
         
@@ -424,7 +442,7 @@ Cards: {cards}Relics: {relics}Potions: {potions}"""
             # 尝试重试一次
             debug_print("[PERF] Retrying API call...")
             try:
-                response = GPT(messages)
+                response = GPT(messages, debug_print=debug_print)
                 api_elapsed = time.time() - api_start
                 debug_print(f"[PERF] Retry API call completed in {api_elapsed:.2f}s")
                 
