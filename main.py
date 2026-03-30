@@ -344,11 +344,19 @@ class SlayTheSpireModUI:
                 # 检查卡牌是否在手牌中
                 if card_to_play not in hand:
                     self.debug_print(f"M: Card {card_to_play} not in hand. Skipping action: {command}")
+                    self.debug_print(f"M: Current hand: {hand}")
                     return
                 else:
                     # 转换命令格式：
                     # "play Strike 0" -> "play 1 0"（假设 Strike 是第 1 张牌）
-                    command = f"play {hand.index(card_to_play)+1} {command.split()[-1]}"
+                    # 注意：使用 index() 只会找到第一张匹配的卡牌
+                    card_index = hand.index(card_to_play)
+                    command = f"play {card_index + 1} {command.split()[-1]}"
+                    
+                    # 从手牌列表中移除已打出的卡牌，防止重复打出
+                    # 这对于 AI 错误地输出重复卡牌时非常重要
+                    hand.pop(card_index)
+                    self.debug_print(f"M: Removed played card from hand tracking. Remaining: {len(hand)} cards")
 
             # =================================================================
             # 步骤 3: 发送命令到 stdout 给游戏执行
