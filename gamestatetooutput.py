@@ -315,10 +315,11 @@ Examples:
 Rules: 
 1. Only play cards in hand
 2. TOTAL ENERGY COST must not exceed {state["combat_state"]["player"]["energy"]}
-3. Each card can only be played ONCE per turn
-4. Prioritize 0-cost cards when possible
-5. ALWAYS end your turn with {{end}} command after playing all desired cards
-6. Use {{}} only for actions"""
+3. Each card instance can only be played ONCE per turn
+4. If you have multiple cards with the same name, count them in your Hand list above
+5. Prioritize 0-cost cards when possible
+6. ALWAYS end your turn with {{end}} command after playing all desired cards
+7. Use {{}} only for actions"""
 
     elif state["screen_type"] == "SHOP_SCREEN":
         is_shop = True
