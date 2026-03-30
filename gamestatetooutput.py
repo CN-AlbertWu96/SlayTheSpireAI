@@ -47,6 +47,7 @@ openai_client = openai.Client(
 )
 
 model = os.getenv("TENCENT_MODEL")
+print(f"[DEBUG] Loaded model from env: {model}")
 
 """
 "claude-3-5-sonnet-20240620"
