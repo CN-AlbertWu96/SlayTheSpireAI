@@ -305,7 +305,16 @@ Enemies:
 {monsters}
 Card Effects:
 {card_descriptions}
-Actions: {{play CardName target}} {{end}} {{potion use/discard slot target}}
+Actions:
+- {{play CardName}} for block/defense cards (no target needed)
+- {{play CardName target_number}} for attack cards (target: 0 or 1 for enemy index)
+- {{end}} to end your turn
+
+Examples:
+{{play Defend}} - correct
+{{play Strike 0}} - correct (Strike targets enemy 0)
+{{play Headbutt 1}} - correct (Headbutt targets enemy 1)
+
 Rules: 
 1. Only play cards in hand
 2. TOTAL ENERGY COST must not exceed {state["combat_state"]["player"]["energy"]}
@@ -494,6 +503,11 @@ Cards: {cards}Relics: {relics}Potions: {potions}"""
             # 清理卡牌名称：移除括号部分（如 "Defend (1)" -> "Defend"）
             # AI 可能看到 "Defend (1)" 格式，但 combat_hand 只有 "Defend"
             arg_cleaned = re.sub(r'\s*\([^)]*\)', '', arg).strip()
+            
+            # 进一步清理：移除末尾的数字（如 "Headbutt 1" -> "Headbutt"）
+            # 这处理模型错误地在卡牌名后添加数字的情况
+            if arg_cleaned and arg_cleaned.split()[-1].isdigit():
+                arg_cleaned = ' '.join(arg_cleaned.split()[:-1])
             
             if arg_cleaned in combat_hand:
                 arg = arg_cleaned
