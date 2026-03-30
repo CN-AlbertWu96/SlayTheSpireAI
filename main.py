@@ -334,6 +334,12 @@ class SlayTheSpireModUI:
                 if "relics" not in state:
                     state = state["game_state"]
                 
+                # 检查是否在战斗状态（combat_state 存在）
+                if "combat_state" not in state:
+                    self.debug_print("M: Not in combat. Skipping play action: " + command)
+                    self.debug_print(f"M: Current screen_type: {state.get('screen_type', 'unknown')}")
+                    return
+                
                 # 获取当前手牌列表（小写）
                 hand = [card["name"].lower() for card in state["combat_state"]["hand"]]
                 
