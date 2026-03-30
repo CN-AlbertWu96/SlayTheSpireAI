@@ -94,8 +94,38 @@ def main(app):
             # 步骤 3: 处理游戏状态
             # ====================================================================
             if "error" not in jsonified:
+                # 检测游戏状态是否改变（如进入选择界面）
+                # 如果 screen_type 改变，应该清空命令队列重新生成
+                old_game_state = app.last_game_state
+                should_clear_queue = False
+                
+                if old_game_state:
+                    try:
+                        old_state = json.loads(old_game_state.replace(",\n        ...", ""))
+                        old_screen_type = old_state.get("screen_type", "")
+                        new_screen_type = jsonified.get("screen_type", "")
+                        
+                        # 如果屏幕类型改变，清空队列
+                        if old_screen_type != new_screen_type:
+                            app.debug_print(f"Screen type changed: {old_screen_type} -> {new_screen_type}")
+                            should_clear_queue = True
+                        
+                        # 或者从战斗中进入特殊界面（如 Headbutt 选择界面）
+                        if "combat_state" in old_state and "combat_state" in jsonified:
+                            if old_state.get("screen_type") == "" and new_screen_type != "":
+                                app.debug_print(f"Entered special screen during combat: {new_screen_type}")
+                                should_clear_queue = True
+                    except Exception as e:
+                        app.debug_print(f"Error comparing game states: {e}")
+                
                 # 更新共享状态，供其他线程使用
                 app.last_game_state = game_state
+                
+                # 如果需要清空队列，先清空再执行
+                if should_clear_queue:
+                    app.debug_print("Clearing command queue due to state change")
+                    app.queued_commands = []
+                
                 app.debug_print(f"Updated last_game_state, queued_commands={len(app.queued_commands)}")
                 
                 # 触发命令执行：

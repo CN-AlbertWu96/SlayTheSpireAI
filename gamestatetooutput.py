@@ -400,6 +400,7 @@ Cards: {cards}Relics: {relics}Potions: {potions}"""
         requires_confirm = True
         keep_messages = True
         choices = state.get("choice_list", [])
+        debug_print(f"[GRID] Screen detected, choices: {choices}")
         
         prompt = f"Grid selection:\n{', '.join([f'{i}: {c}' for i, c in enumerate(choices)])}\nAction: {{choose index}}"
         if state["screen_state"]["for_upgrade"]:
