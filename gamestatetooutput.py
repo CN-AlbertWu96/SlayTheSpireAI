@@ -266,7 +266,7 @@ Relics:
                 player_powers = f"\nYour Powers: {player_powers.strip(', ')}"
 
             prompt += f"""Combat State:
-Energy: {state["combat_state"]["player"]["energy"]}
+Energy: {state["combat_state"]["player"]["energy"]} (IMPORTANT: Total cost of cards played cannot exceed this!)
 Hand: {hand}
 Draw Pile: {draw_pile}
 Discard Pile: {discard_pile}{player_powers}
@@ -276,7 +276,12 @@ Enemies:
 Card Effects:
 {card_descriptions}
 Actions: {{play CardName target}} {{end}} {{potion use/discard slot target}}
-Rules: Only play cards in hand. Check energy. Use {{}} only for actions."""
+Rules: 
+1. Only play cards in hand
+2. TOTAL ENERGY COST must not exceed {state["combat_state"]["player"]["energy"]}
+3. Each card can only be played ONCE per turn
+4. Prioritize 0-cost cards when possible
+5. Use {{}} only for actions"""
 
     elif state["screen_type"] == "SHOP_SCREEN":
         is_shop = True
