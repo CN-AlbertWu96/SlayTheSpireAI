@@ -45,10 +45,12 @@ sys.path.append(dir_path)
 from gamestatetooutput import gamestate_to_output
 
 # 创建日志目录，用于保存每次游戏状态的 JSON 快照
-# 这些日志对于调试和理解 AI 决策过程非常重要
+# 每次启动时清空旧日志，确保只保留当前这局的日志
 logs_path = os.path.join(dir_path, "logs")
-if not os.path.exists(logs_path):
-    os.makedirs(logs_path)
+if os.path.exists(logs_path):
+    import shutil
+    shutil.rmtree(logs_path)
+os.makedirs(logs_path)
 
 # 配置日志格式
 def get_timestamp():
